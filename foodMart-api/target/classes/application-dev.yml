@@ -1,0 +1,11 @@
+#1、端口
+server:
+ port: 8088
+#2、数据源改动
+spring:
+  datasource:  # 数据源的相关配置
+    url: jdbc:mysql://localhost:3306/foodMart?useUnicode=true&characterEncoding=UTF-8&autoReconnect
+#3、开发环境我们的日志打印照旧
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #在控制台输出日志的实现
