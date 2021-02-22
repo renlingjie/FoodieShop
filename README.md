@@ -1,0 +1,3 @@
+# FoodieShop
+My Third Item
+说明：该项目为前后端分离项目，所以前端资源是部署在Tomcat中，这里上传的前端资源是放在了foodMart-web中作为备份，实际使用过程中需要将该子项目下的两个文件放入Tomcat的WebApps中，然后删除这个子项目，前后端分别启动即可
