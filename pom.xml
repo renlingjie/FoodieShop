@@ -13,6 +13,7 @@
         <module>foodMart-mapper</module>
         <module>foodMart-service</module>
         <module>foodMart-api</module>
+        <module>foodMart-web</module>
     </modules>
     <packaging>pom</packaging>
 

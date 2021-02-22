@@ -6,11 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="foodMart-api" />
-        <module name="foodMart-service" />
-        <module name="foodMart-common" />
         <module name="foodMart-mapper" />
+        <module name="foodMart-api" />
+        <module name="foodMart-common" />
         <module name="foodMart-pojo" />
+        <module name="foodMart-service" />
+        <module name="foodMart-web" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8" />
@@ -22,6 +23,7 @@
       <module name="foodMart-mapper" options="-parameters" />
       <module name="foodMart-pojo" options="-parameters" />
       <module name="foodMart-service" options="-parameters" />
+      <module name="foodMart-web" options="-parameters" />
     </option>
   </component>
 </project>
