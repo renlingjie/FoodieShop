@@ -15,6 +15,8 @@ public class CorsConfig {
         //1、添加cors配置信息
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("http://localhost:8080");//添加允许的跨域信息的内容
+        config.addAllowedOrigin("http://foodieshop.ltd:8080");//添加允许的跨域信息的内容
+        config.addAllowedOrigin("http://foodieshop.ltd");//添加允许的跨域信息的内容
         config.addAllowedOrigin("http://8.141.50.179:8080");//添加允许的跨域信息的内容
         config.addAllowedOrigin("http://8.141.50.179");//为以后作准备，因为Nginx是不会有端口的
         //是否允许我们的请求携带一些内容，因为我们要用cookie、session，所以这里我们设置为true

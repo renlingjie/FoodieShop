@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>foodMart-api</artifactId>
-    <packaging>war</packaging>
+    <!--<packaging>war</packaging>-->
     <dependencies>
         <dependency>
             <groupId>com.rlj</groupId>
