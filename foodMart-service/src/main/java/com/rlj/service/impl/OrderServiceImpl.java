@@ -6,6 +6,7 @@ import com.rlj.mapper.OrderItemsMapper;
 import com.rlj.mapper.OrderStatusMapper;
 import com.rlj.mapper.OrdersMapper;
 import com.rlj.pojo.*;
+import com.rlj.pojo.bo.ShopcartBO;
 import com.rlj.pojo.bo.SubmitOrderBO;
 import com.rlj.pojo.vo.MerchantOrdersVO;
 import com.rlj.pojo.vo.OrderVO;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemsMapper orderItemsMapper;
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public OrderVO createOrder(SubmitOrderBO submitOrderBO) {
+    public OrderVO createOrder(List<ShopcartBO> shopcartList,SubmitOrderBO submitOrderBO) {
         String userId = submitOrderBO.getUserId();
         String addressId = submitOrderBO.getAddressId();
         String itemSpecIds = submitOrderBO.getItemSpecIds();
@@ -67,10 +69,15 @@ public class OrderServiceImpl implements OrderService {
         String itemSpecIdArr[] = itemSpecIds.split(",");
         Integer totalAmount = 0;//商品原价累计
         Integer realPayAmount = 0;//折扣后的实际支付价格累计
+        //来一个集合存储结算的商品信息，然后将这个集合中的数据从购物车Redis中删除
+        List<ShopcartBO> toBeRemovedShopcartList = new ArrayList<>();
         //2.2、然后根据得到的规格ID查询到对应的价格，然后进行累加
-        //TODO 我们还需要商品购物车中的数量，来做乘法，但是这是从Redis中获取的，我们这里暂且设置为1
-        int buyCounts = 1;
+        //我们还需要商品购物车中的数量，来做乘法，但是这是从Redis中获取的，我们这里暂且设置为1
+        //int buyCounts = 1;
         for (String itemSpecId:itemSpecIdArr){
+            ShopcartBO cartItem = getBuyCountsFromShopcart(shopcartList, itemSpecId);
+            int buyCounts = cartItem.getBuyCounts();
+            toBeRemovedShopcartList.add(cartItem);
             ItemsSpec itemsSpec = itemService.queryItemsSpecById(itemSpecId);
             totalAmount += itemsSpec.getPriceNormal() * buyCounts;
             realPayAmount += itemsSpec.getPriceDiscount() * buyCounts;
@@ -117,6 +124,7 @@ public class OrderServiceImpl implements OrderService {
         OrderVO orderVO = new OrderVO();
         orderVO.setOrderId(orderId);
         orderVO.setMerchantOrdersVO(merchantOrdersVO);
+        orderVO.setToBeRemovedShopcartList(toBeRemovedShopcartList);
         return orderVO;
     }
     @Transactional(propagation = Propagation.REQUIRED)
@@ -160,6 +168,16 @@ public class OrderServiceImpl implements OrderService {
         close.setOrderStatus(OrderStatusEnum.CLOSE.type);
         close.setCloseTime(new Date());
         orderStatusMapper.updateByPrimaryKeySelective(close);
+    }
+
+    //创建订单方法中，会遍历itemSpecIdArr中每一个specId，此时我们根据该specId拿到Redis中与之对应的购物车中的信息，从而得到buyCounts
+    private ShopcartBO getBuyCountsFromShopcart(List<ShopcartBO> shopcartList,String specId){
+        for (ShopcartBO cart:shopcartList) {
+            if (cart.getSpecId().equals(specId)){
+                return cart;
+            }
+        }
+        return null;
     }
 
 }

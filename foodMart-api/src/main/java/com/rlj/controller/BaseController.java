@@ -13,6 +13,8 @@ public class BaseController {
     public static final Integer Search_PAGE_SIZE = 20;
     //定义我们的Cookie的名字，因为前端就叫shopcart，所以这里也要保持一致
     public static final String FOODIE_SHOPCART = "shopcart";
+    //定义一个Redis的token名称
+    public static final String REDIS_USR_TOKEN = "redis_usr_token";
     //支付成功前往后端支付成功接口的地址
     String payReturnUrl = "http://8.141.50.179:8088/foodMart-api/orders/notifyMerchantOrderPaid";
     // 支付中心的调用地址

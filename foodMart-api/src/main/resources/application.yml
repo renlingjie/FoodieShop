@@ -15,7 +15,7 @@ server:
 ############################################################
 spring:
   profiles:
-    active: prod #和prod切换
+    active: dev #和prod切换
   datasource:  # 数据源的相关配置
     type: com.zaxxer.hikari.HikariDataSource # 数据源类型：HikariCP
     driver-class-name: com.mysql.jdbc.Driver # mysql驱动
@@ -35,6 +35,12 @@ spring:
     multipart:
       max-file-size: 512000 # 文件上传大小限制为500KB
       max-request-size: 512000 # 请求大小限制为500KB
+  session:
+    store-type: redis #指定会话所保存的介质
+  #security:
+   # user:
+    #  name: rlj
+     # password: 111111
 ############################################################
 #
 # mybatis 配置

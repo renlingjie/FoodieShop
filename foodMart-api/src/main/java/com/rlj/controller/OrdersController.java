@@ -5,14 +5,13 @@ import com.rlj.enums.PayMethod;
 import com.rlj.pojo.OrderStatus;
 import com.rlj.pojo.UserAddress;
 import com.rlj.pojo.bo.AddressBO;
+import com.rlj.pojo.bo.ShopcartBO;
 import com.rlj.pojo.bo.SubmitOrderBO;
 import com.rlj.pojo.vo.MerchantOrdersVO;
 import com.rlj.pojo.vo.OrderVO;
 import com.rlj.service.AddressService;
 import com.rlj.service.OrderService;
-import com.rlj.utils.CookieUtils;
-import com.rlj.utils.IMOOCJSONResult;
-import com.rlj.utils.MobileEmailUtils;
+import com.rlj.utils.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +34,8 @@ public class OrdersController extends BaseController{
     private AddressService addressService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private RedisOperator redisOperator;
     //1、创建订单
     //刷新购物车中的数据(主要是商品价格)
     @ApiOperation(value = "用户下单", notes = "用户下单", httpMethod = "POST")
@@ -46,14 +47,23 @@ public class OrdersController extends BaseController{
         && submitOrderBO.getPayMethod() != PayMethod.ALIPAY.type){
             return IMOOCJSONResult.errorMsg("支付方式不支持");
         }
-        System.out.println(submitOrderBO.toString());
+
+        String shopCartJson = redisOperator.get(FOODIE_SHOPCART + ":" + submitOrderBO.getUserId());
+        if (StringUtils.isBlank(shopCartJson)){
+            return IMOOCJSONResult.errorMsg("购物车数据不正确");
+        }
+        List<ShopcartBO> shopcartList = JsonUtils.jsonToList(shopCartJson,ShopcartBO.class);
+
         //1、创建订单
-        OrderVO orderVO = orderService.createOrder(submitOrderBO);
+        OrderVO orderVO = orderService.createOrder(shopcartList,submitOrderBO);
         String orderId = orderVO.getOrderId();
         //2、创建订单以后，移除购物车中已结算的商品
-        //TODO 整合Redis后，完善购物车中的已结算商品清除，并且同步到前端的Cookie
-        //因为我们这里还没到Redis，我们直接设置为空字符串，将前端的Cookie清空
-        //CookieUtils.setCookie(request,response,FOODIE_SHOPCART,"",true);
+        //整合Redis后，完善购物车中的已结算商品清除，并且同步到前端的Cookie
+        //将已经结算的商品从我们的购物车Redis中清除，清除后的shopcartList就是最新的，更新到Redis中
+        shopcartList.removeAll(orderVO.getToBeRemovedShopcartList());
+        redisOperator.set(FOODIE_SHOPCART + ":" + submitOrderBO.getUserId(),JsonUtils.objectToJson(shopcartList));
+        //使用上面最新的shopcartList更新Cookie
+        CookieUtils.setCookie(request,response,FOODIE_SHOPCART,JsonUtils.objectToJson(shopcartList),true);
         //3、向支付中心发送当前订单，用于保存支付中心的订单数据
         MerchantOrdersVO merchantOrdersVO = orderVO.getMerchantOrdersVO();
         merchantOrdersVO.setReturnUrl(payReturnUrl);

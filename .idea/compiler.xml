@@ -9,12 +9,14 @@
         <module name="foodMart-mapper" />
         <module name="foodMart-api" />
         <module name="foodMart-common" />
+        <module name="foodie-sso" />
         <module name="foodMart-pojo" />
         <module name="foodMart-service" />
-        <module name="foodMart-web" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="8" />
+    <bytecodeTargetLevel target="8">
+      <module name="foodMart-web" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -24,6 +26,7 @@
       <module name="foodMart-pojo" options="-parameters" />
       <module name="foodMart-service" options="-parameters" />
       <module name="foodMart-web" options="-parameters" />
+      <module name="foodie-sso" options="-parameters" />
     </option>
   </component>
 </project>

@@ -1,9 +1,11 @@
 package com.rlj.config;
 
+import com.rlj.controller.interceptor.UserTokenInterceptor;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -26,4 +28,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
         return builder.build();
     }
 
+    //将拦截器加入到容器中
+    @Bean
+    public UserTokenInterceptor userTokenInterceptor() {
+        return new UserTokenInterceptor();
+    }
+    //注册拦截器并配置拦截的哪些路径
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        //指定拦截方法的路由
+        registry.addInterceptor(userTokenInterceptor())
+                .addPathPatterns("/hello")
+                .addPathPatterns("/userInfo/*");
+        //将最终指定拦截路径的拦截器真正的注册进去
+        WebMvcConfigurer.super.addInterceptors(registry);
+    }
 }

@@ -1,6 +1,6 @@
 #1、端口
 server:
- port: 8088
+ port: 8090
 #2、数据源改动
 spring:
   datasource:  # 数据源的相关配置

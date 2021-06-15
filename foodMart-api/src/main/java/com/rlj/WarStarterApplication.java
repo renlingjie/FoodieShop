@@ -4,6 +4,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 //添加war包的启动类
+/*
 public class WarStarterApplication extends SpringBootServletInitializer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder){
@@ -11,3 +12,4 @@ public class WarStarterApplication extends SpringBootServletInitializer {
        return builder.sources(Application.class);
     }
 }
+*/
