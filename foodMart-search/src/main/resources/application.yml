@@ -1,0 +1,15 @@
+server:
+  port: 8033
+spring:
+  datasource:  # 数据源的相关配置
+    type: com.zaxxer.hikari.HikariDataSource # 数据源类型：HikariCP
+    driver-class-name: com.mysql.jdbc.Driver # mysql驱动
+    url: jdbc:mysql://localhost:3306/foodMart?useUnicode=true&characterEncoding=UTF-8&autoReconnect
+    username: root
+    password: root1234
+  redis:
+    database: 1   #database数量，16以内，默认是0
+    host: 192.168.218.22   #我们所使用的Redis所在的主机地址，这虚拟机的，若是我们的本机那就是127.0.0.1
+    port: 6379
+    timeout: 500
+    password: rlj

@@ -82,9 +82,9 @@ public class MyCommentsServiceImpl implements MyCommentsService {
         PageInfo<?> pageList = new PageInfo<>(list);
         PagedGridResult gird = new PagedGridResult();
         gird.setPage(page);//当前页数(请求的第几页作为参数传进来了，这里也要返回回去)
-        gird.setRows(list);//总页数
-        gird.setTotal(pageList.getPages());//总记录数
-        gird.setRecords(pageList.getTotal());//每行显示的内容
+        gird.setRows(list);//每行显示的内容
+        gird.setTotal(pageList.getPages());//总页数
+        gird.setRecords(pageList.getTotal());//总记录数
         return gird;
     }
     @Transactional(propagation = Propagation.SUPPORTS)
