@@ -33,10 +33,9 @@ public class ItemsController {
         }else {
             page--;//ES的分页默认是从0开始的，我们查询第一页发送的请求就是1，其实是要为0，所以减1
         }
-/*        if (pageSize == null) {
+        if (pageSize == null) {
             pageSize = 10;//在这里设置死每页查询10条记录
-        }*/
-        pageSize = 10;//在这里设置死每页查询10条记录
+        }
         PagedGridResult gird = itemsEsService.searchItems(keywords, sort, page, pageSize);
         return IMOOCJSONResult.ok(gird);
     }

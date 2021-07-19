@@ -12,6 +12,7 @@
         <module name="foodie-sso" />
         <module name="foodMart-pojo" />
         <module name="foodMart-service" />
+        <module name="foodMart-search" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
@@ -24,6 +25,7 @@
       <module name="foodMart-common" options="-parameters" />
       <module name="foodMart-mapper" options="-parameters" />
       <module name="foodMart-pojo" options="-parameters" />
+      <module name="foodMart-search" options="-parameters" />
       <module name="foodMart-service" options="-parameters" />
       <module name="foodMart-web" options="-parameters" />
       <module name="foodie-sso" options="-parameters" />
