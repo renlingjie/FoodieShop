@@ -15,6 +15,7 @@
         <module>foodMart-api</module>
         <module>foodie-sso</module>
         <module>foodMart-search</module>
+        <module>foodMart-fastdfs</module>
         <!--<module>foodMart-web</module>-->
     </modules>
     <packaging>pom</packaging>

@@ -3,16 +3,15 @@ package com.rlj.controller.center;
 import com.rlj.controller.BaseController;
 import com.rlj.pojo.Users;
 import com.rlj.pojo.bo.center.CenterUserBO;
+import com.rlj.pojo.vo.UsersVO;
 import com.rlj.resource.FileUpload;
 import com.rlj.service.center.CenterUserService;
-import com.rlj.utils.CookieUtils;
-import com.rlj.utils.DateUtil;
-import com.rlj.utils.IMOOCJSONResult;
-import com.rlj.utils.JsonUtils;
+import com.rlj.utils.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -29,6 +28,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Api(value = "用户信息接口",tags = {"用户信息相关接口"})
 @RequestMapping("userInfo")
@@ -38,6 +38,8 @@ public class CenterUserController extends BaseController {
     private CenterUserService centerUserService;
     @Autowired
     private FileUpload fileUpload;
+    @Autowired
+    private RedisOperator redisOperator;
     @ApiOperation(value = "修改用户信息",notes = "修改用户信息",httpMethod = "POST")
     @PostMapping("update")//前端center中查询用户信息的路由就是center/userInfo
     public IMOOCJSONResult update(@RequestParam String userId, @RequestBody @Valid CenterUserBO centerUserBO,
@@ -51,9 +53,13 @@ public class CenterUserController extends BaseController {
         }
 
         //新的用户信息也要覆盖本地的Cookie，和我们PassportController的手段一样
-        userNewResult = setNullProperty(userNewResult);
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(userNewResult),true);
-        //TODO 后续要改，增加令牌token，会整合到Redis、分布式会话中
+        //userNewResult = setNullProperty(userNewResult);
+        String uniqueToken = UUID.randomUUID().toString().trim();
+        redisOperator.set(REDIS_USR_TOKEN+":"+userNewResult.getId(),uniqueToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(userNewResult,usersVO);
+        usersVO.setUserUniqueToken(uniqueToken);
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
         return IMOOCJSONResult.ok();
     }
     @ApiOperation(value = "用户头像修改",notes = "用户头像修改",httpMethod = "POST")
@@ -123,8 +129,12 @@ public class CenterUserController extends BaseController {
         Users userResult = centerUserService.updateUserFace(userId,finalUserFaceUrl);
         //新的用户信息也要覆盖本地的Cookie，和我们PassportController的手段一样
         userResult = setNullProperty(userResult);
-        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(userResult),true);
-        //TODO 后续要改，增加令牌token，会整合到Redis、分布式会话中
+        String uniqueToken = UUID.randomUUID().toString().trim();
+        redisOperator.set(REDIS_USR_TOKEN+":"+userResult.getId(),uniqueToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(userResult,usersVO);
+        usersVO.setUserUniqueToken(uniqueToken);
+        CookieUtils.setCookie(request,response,"user", JsonUtils.objectToJson(usersVO),true);
         return IMOOCJSONResult.ok();
     }
     //定义一个清空查询到的Users对象的私密属性的方法
