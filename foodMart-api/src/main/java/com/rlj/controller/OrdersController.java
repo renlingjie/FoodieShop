@@ -15,6 +15,8 @@ import com.rlj.utils.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +24,10 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Api(value = "订单相关",tags = {"订单相关的api接口"})
 @RequestMapping("orders")
@@ -36,6 +41,8 @@ public class OrdersController extends BaseController{
     private RestTemplate restTemplate;
     @Autowired
     private RedisOperator redisOperator;
+    @Autowired
+    private RedissonClient redissonClient;
     //1、创建订单
     //刷新购物车中的数据(主要是商品价格)
     @ApiOperation(value = "用户下单", notes = "用户下单", httpMethod = "POST")
@@ -43,6 +50,32 @@ public class OrdersController extends BaseController{
     //前端的那个请求（serverUrl+'/orders/create,'+{xxxxxx}）参数是json，所以@RequestBody
     public IMOOCJSONResult create(@RequestBody SubmitOrderBO submitOrderBO,
                                   HttpServletRequest request, HttpServletResponse response) {
+        /**
+         * 二、用户下单请求的时候校验Redis中是否有此请求的Token，有两种情况需要考虑：
+         *  1、如果校验成功，应该将这个Token删除，因为如果不删除，第二次、第三次还会通过验证，幂等性失效
+         *  2、并发的时候，在第一次校验通过，Redis要删除Token前，第二次也通过校验，还是会产生两个订单。所以加分布式锁，
+         *     保证线程安全，从而保证高并发情况下的幂等性不受影响
+         */
+        String orderTokenKey = "ORDER_TOKEN_"+request.getSession().getId();
+        String lockKey = "LOCK_KEY_"+request.getSession().getId();
+        RLock lock = redissonClient.getLock(lockKey);//上锁，第二个重复请求就会在这等待锁，就不会有并发的哪种情况了
+        lock.lock(5, TimeUnit.SECONDS);//加锁，创建订单5s怎么说都够了
+        try {
+            String orderToken = redisOperator.get(orderTokenKey);
+            if (StringUtils.isBlank(orderToken)) throw new RuntimeException("orderToken不存在");
+            boolean currentToken = orderToken.equals(submitOrderBO.getToken());
+            if (!currentToken) throw new RuntimeException("orderToken不正确");
+            redisOperator.del(orderTokenKey);
+        }finally {
+            //无论结果如何，都释放锁，但是需注意一个问题，上面设置锁的过期时间为5s，虽说下面创建订单一般是够用了，
+            //但是有时候不够用时，上面锁过期自动释放，再到这里手动释放就会找不到锁，就报错，故再try/catch一层
+            try{
+                lock.unlock();
+            } catch (Exception e){
+                //捕捉到释放锁的异常，就不往外抛了
+            }
+        }
+
         if (submitOrderBO.getPayMethod() != PayMethod.WEIXIN.type
         && submitOrderBO.getPayMethod() != PayMethod.ALIPAY.type){
             return IMOOCJSONResult.errorMsg("支付方式不支持");
@@ -83,6 +116,7 @@ public class OrdersController extends BaseController{
         }
         return IMOOCJSONResult.ok(orderId);
     }
+
     //构建商户端支付成功的回调接口
     @PostMapping("notifyMerchantOrderPaid")
     public Integer notifyMerchantOrderPaid(String merchantOrderId){
@@ -91,11 +125,31 @@ public class OrdersController extends BaseController{
         orderService.updateOrderStatus(merchantOrderId, OrderStatusEnum.WAIT_DELIVER.type);
         return HttpStatus.OK.value();//直接返回200状态码
     }
+
     //返回前端订单状态的接口
     @PostMapping("getPaidOrderInfo")
     public IMOOCJSONResult queryOrderStatusInfo(String orderId){
         OrderStatus orderStatus = orderService.queryOrderStatusInfo(orderId);
         //System.out.println("接收到请求，订单状态为"+orderStatus);
         return IMOOCJSONResult.ok(orderStatus);
+    }
+
+    /**
+     * 一、生成Token
+     * 1、直接UUID生成Token，保证其唯一
+     * 2、之后将Token存入Redis，以便后续前端请求过来的Token与Redis中的Token对比
+     * 3、存入Redis中的这个Token的key需要考虑：主要考虑的是幂等性的力度，比如，现在用户在两个浏览器(即两个会话)下单，
+     *    会认为是两个不同的下单操作。即幂等性只防一个浏览器，这个时候不同浏览器的key需要不同，不同浏览器下单即开启了
+     *    不同的会话，所以我们请求的参数可以是HttpSession，通过SessionID构造key，最终实现"同一个浏览器要求幂等，
+     *    不同浏览器不要求幂等"的需求
+     * 4、Token要设置一个过期时间后自动释放，因为用户到下单页，前端发起请求生成Token，但此时用户有一段时间没有支付，
+     *    我们不能直接就失效了，而是设置一个过期时间，超过这个时间用户再支付才会失效(比如下面的10min)
+     */
+    @ApiOperation(value = "获取订单Token", notes = "获取订单Token", httpMethod = "POST")
+    @PostMapping("/getOrderToken")
+    public IMOOCJSONResult getOrderToken(HttpSession session){
+        String token = UUID.randomUUID().toString();
+        redisOperator.set("ORDER_TOKEN_"+session.getId(),token,600);
+        return IMOOCJSONResult.ok(token);
     }
 }

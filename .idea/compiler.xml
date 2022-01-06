@@ -7,12 +7,13 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="foodMart-mapper" />
-        <module name="foodMart-api" />
+        <module name="foodMart-fastdfs" />
         <module name="foodMart-common" />
-        <module name="foodie-sso" />
-        <module name="foodMart-pojo" />
         <module name="foodMart-service" />
         <module name="foodMart-search" />
+        <module name="foodMart-api" />
+        <module name="foodMart-pojo" />
+        <module name="foodie-sso" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
@@ -23,6 +24,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="foodMart-api" options="-parameters" />
       <module name="foodMart-common" options="-parameters" />
+      <module name="foodMart-fastdfs" options="-parameters" />
       <module name="foodMart-mapper" options="-parameters" />
       <module name="foodMart-pojo" options="-parameters" />
       <module name="foodMart-search" options="-parameters" />
